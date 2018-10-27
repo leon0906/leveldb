@@ -10,14 +10,20 @@ namespace leveldb {
 
 const char* Status::CopyState(const char* state) {
   uint32_t size;
+  // The first four bytes is the length of the message
   memcpy(&size, state, sizeof(size));
+  // The 5th byte is the code. That's why the result size
+  // needs to be message length + 5
+  // Need to remember that the pointers passed to memcpy
+  // should not be nullptr and the two arrays should be overlapping
+  // In our case, this is a private method and we already checked null before calling
   char* result = new char[size + 5];
   memcpy(result, state, size + 5);
   return result;
 }
 
 Status::Status(Code code, const Slice& msg, const Slice& msg2) {
-  assert(code != kOk);
+  assert(code != kOk); // How about supporting Ok with a message?
   const uint32_t len1 = msg.size();
   const uint32_t len2 = msg2.size();
   const uint32_t size = len1 + (len2 ? (2 + len2) : 0);
@@ -26,7 +32,7 @@ Status::Status(Code code, const Slice& msg, const Slice& msg2) {
   result[4] = static_cast<char>(code);
   memcpy(result + 5, msg.data(), len1);
   if (len2) {
-    result[5 + len1] = ':';
+    result[5 + len1] = ':'; // This way of support msg & msg2 is weird ..
     result[6 + len1] = ' ';
     memcpy(result + 7 + len1, msg2.data(), len2);
   }
