@@ -40,7 +40,7 @@ void WriteBatch::Clear() {
 }
 
 size_t WriteBatch::ApproximateSize() {
-  return rep_.size();
+  return rep_.size(); // this is string length instead of actuall operation count
 }
 
 Status WriteBatch::Iterate(Handler* handler) const {
@@ -88,6 +88,8 @@ int WriteBatchInternal::Count(const WriteBatch* b) {
 }
 
 void WriteBatchInternal::SetCount(WriteBatch* b, int n) {
+  // The first 8 byte of rep_ is a sequence number, skip it.
+  // Then, set the next 4 byte, which is the count.
   EncodeFixed32(&b->rep_[8], n);
 }
 

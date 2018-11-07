@@ -27,6 +27,7 @@ class WriteBatchInternal {
 
   // Store the specified number as the sequence number for the start of
   // this batch.
+  // SequenceNumber is just a uint64_t
   static void SetSequence(WriteBatch* batch, SequenceNumber seq);
 
   static Slice Contents(const WriteBatch* batch) {
