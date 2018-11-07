@@ -73,6 +73,7 @@ class LEVELDB_EXPORT WriteBatch {
  private:
   friend class WriteBatchInternal;
 
+  // The WriteBatch actually keep appending operations to this string.
   std::string rep_;  // See comment in write_batch.cc for the format of rep_
 };
 
