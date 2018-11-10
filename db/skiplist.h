@@ -92,7 +92,7 @@ class SkipList {
     const SkipList* list_;
     Node* node_;
     // Intentionally copyable
-  };
+  }; // class Iterator
 
  private:
   enum { kMaxHeight = 12 };
@@ -106,6 +106,9 @@ class SkipList {
   // Modified only by Insert().  Read racily by readers, but stale
   // values are ok.
   port::AtomicPointer max_height_;   // Height of the entire list
+  // Note: this is not intensionally a pointer at all but just a int value.
+  // Reason whyt it uses AtomicPointer (a std::atomic<void*>) is to
+  // leverage its atomic features. We always store a int value into it
 
   inline int GetMaxHeight() const {
     return static_cast<int>(
@@ -140,7 +143,7 @@ class SkipList {
   // No copying allowed
   SkipList(const SkipList&);
   void operator=(const SkipList&);
-};
+}; // class SkipList
 
 // Implementation details follow
 template<typename Key, class Comparator>
@@ -177,11 +180,14 @@ struct SkipList<Key,Comparator>::Node {
  private:
   // Array of length equal to the node height.  next_[0] is lowest level link.
   port::AtomicPointer next_[1];
-};
+}; // struct Node
 
 template<typename Key, class Comparator>
 typename SkipList<Key,Comparator>::Node*
 SkipList<Key,Comparator>::NewNode(const Key& key, int height) {
+  // allocate mem according to height, which means how many pointers are needed
+  // note that the Node only declares the next_ array as length 1.
+  // This way of creating object is so flexible in c++.
   char* mem = arena_->AllocateAligned(
       sizeof(Node) + sizeof(port::AtomicPointer) * (height - 1));
   return new (mem) Node(key);
@@ -268,7 +274,8 @@ typename SkipList<Key,Comparator>::Node* SkipList<Key,Comparator>::FindGreaterOr
     if (KeyIsAfterNode(key, next)) {
       // Keep searching in this list
       x = next;
-    } else {
+    }
+    else {
       if (prev != nullptr) prev[level] = x;
       if (level == 0) {
         return next;
@@ -329,6 +336,7 @@ SkipList<Key,Comparator>::SkipList(Comparator cmp, Arena* arena)
       max_height_(reinterpret_cast<void*>(1)),
       rnd_(0xdeadbeef) {
   for (int i = 0; i < kMaxHeight; i++) {
+    // The head_ has 12 next pointers and each of the are point to null
     head_->SetNext(i, nullptr);
   }
 }

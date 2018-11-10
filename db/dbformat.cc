@@ -48,12 +48,19 @@ const char* InternalKeyComparator::Name() const {
 }
 
 int InternalKeyComparator::Compare(const Slice& akey, const Slice& bkey) const {
+  // Note that the passed-in akey and bkey are InternalKey, which is
+  // UserKey + 8 bytes
+  // within the 8 bytes, the left 7 bytes is sequence number, the last 1 byte is ValueType
+
   // Order by:
   //    increasing user key (according to user-supplied comparator)
   //    decreasing sequence number
   //    decreasing type (though sequence# should be enough to disambiguate)
   int r = user_comparator_->Compare(ExtractUserKey(akey), ExtractUserKey(bkey));
   if (r == 0) {
+    // The anum and bnum are the right most 8 bytes of the InternalKey
+    // Since the first 7 bytes of it is sequence number, we only compare their
+    // value type (the last byte) only when their sequence numbers are equal
     const uint64_t anum = DecodeFixed64(akey.data() + akey.size() - 8);
     const uint64_t bnum = DecodeFixed64(bkey.data() + bkey.size() - 8);
     if (anum > bnum) {

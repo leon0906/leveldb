@@ -137,6 +137,7 @@ class InternalKey {
  public:
   InternalKey() { }   // Leave rep_ as empty to indicate it is invalid
   InternalKey(const Slice& user_key, SequenceNumber s, ValueType t) {
+    // A InternalKey is a UserKey + 8 bytes (7 bytes of sequence number + 1 byte of value type)
     AppendInternalKey(&rep_, ParsedInternalKey(user_key, s, t));
   }
 
@@ -145,7 +146,7 @@ class InternalKey {
     assert(!rep_.empty());
     return rep_;
   }
-
+  // UserKey is the InternalKey removed the last 8 bytes
   Slice user_key() const { return ExtractUserKey(rep_); }
 
   void SetFrom(const ParsedInternalKey& p) {
